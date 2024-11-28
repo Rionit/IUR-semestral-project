@@ -20,7 +20,7 @@
 
   <div align="center">
     <img src="gifs/anim1.gif" alt="Adding GIF" width="250"/>
-    <img src="gifs/anim2.gif" alt="Removing GIF" width="250"/>
+    <img src="gifs/anim2.gif" alt="Removing GIF" height="555"/>
   </div>
 
   <img src="gifs/page_icons.gif" alt="Adding GIF" width="250"/>
