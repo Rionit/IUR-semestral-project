@@ -23,7 +23,7 @@
     <img src="gifs/anim2.gif" alt="Removing GIF" height="318"/>
   </div>
 
-  <img src="gifs/page_icons.gif" alt="Adding GIF" width="250"/>
+  <img src="gifs/page_icons.gif" alt="Adding GIF" width="500"/>
 </div>
 
 
