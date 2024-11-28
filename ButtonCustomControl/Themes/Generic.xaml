@@ -1,0 +1,155 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:local="clr-namespace:ButtonCustomControl"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:converters="clr-namespace:ButtonCustomControl.Converters">
+
+    <converters:BoolToVisibiltyConverter x:Key="boolToVisibilityConverter"/>
+    <converters:BooleanToInverseBooleanConverter x:Key="booleanToInverseBooleanConverter"/>
+    <converters:ButtonModeToCommandConverter x:Key="buttonModeToCommandConverter" />
+    <converters:TrashTypeToColorConverter x:Key="trashTypeToColorConverter" />
+
+    <sys:Boolean x:Key="True">True</sys:Boolean>
+    <sys:Boolean x:Key="False">False</sys:Boolean>
+
+    <!-- Image changes depending on main switch button (ADD \ REMOVE) -->
+    <Style x:Key="button_image" TargetType="{x:Type Image}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:SimpleRoundButton}}, Path=ButtonMode}" Value="{StaticResource True}">
+                <Setter Property="Source" Value="pack://application:,,,/ButtonCustomControl;component/Images/plus.png"/>
+            </DataTrigger>
+
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:SimpleRoundButton}}, Path=ButtonMode}" Value="{StaticResource False}">
+                <Setter Property="Source" Value="pack://application:,,,/ButtonCustomControl;component/Images/minus.png"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Image is just black + or -, therefore adding color to bg -->
+    <Style x:Key="button_background" TargetType="{x:Type Border}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:SimpleRoundButton}}, Path=ButtonMode}" Value="{StaticResource True}">
+                <Setter Property="Background" Value="MediumSpringGreen"/>
+            </DataTrigger>
+
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:SimpleRoundButton}}, Path=ButtonMode}" Value="{StaticResource False}">
+                <Setter Property="Background" Value="IndianRed"/>
+            </DataTrigger>
+            <!-- Shrinking animation -->
+            <Trigger Property="IsMouseOver" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ThicknessAnimation Duration="0:0:0.200" To="5" Storyboard.TargetProperty="BorderThickness" FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ThicknessAnimation Duration="0:0:0.10" To="0" Storyboard.TargetProperty="BorderThickness" FillBehavior="HoldEnd"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.ExitActions>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Button has two modes, one for adding, one for removing -> each one has its own command -->
+    <Style x:Key="button_base" TargetType="{x:Type Button}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ButtonMode, RelativeSource={RelativeSource TemplatedParent}}" Value="{StaticResource True}">
+                <Setter Property="Command" Value="{Binding AddTrashCommand}"/>
+            </DataTrigger>
+
+            <DataTrigger Binding="{Binding ButtonMode, RelativeSource={RelativeSource TemplatedParent}}" Value="{StaticResource False}">
+                <Setter Property="Command" Value="{Binding RemoveTrashCommand}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type local:SimpleRoundButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:SimpleRoundButton}">
+                    <Grid>
+
+                        <!-- LISTBOX WITH TRASH TYPES -->
+                        <StackPanel Visibility="{Binding IsMouseDown, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=False}">
+                            <ListBox HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="trashTypes"
+                                     ItemsSource="{Binding Path=TrashTypes}" 
+                                     SelectedItem="{Binding Path=SelectedTrashType, Mode=TwoWay}">
+
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Background" Value="MediumSpringGreen"/>
+                                        <Setter Property="BorderBrush" Value="MediumSpringGreen"/>
+                                        <Style.Triggers>
+                                            <!-- I'm selecting by hovering with mouse where left button is down -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="IsSelected" Value="True"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+
+                                <!-- Trash type items -->
+                                <ListBox.ItemTemplate >
+                                    <DataTemplate>
+                                        <TextBlock x:Name="lbTextBlock" Text="{Binding}">
+                                            <TextBlock.Style>
+                                                <Style>
+                                                    <Setter Property="TextBlock.Background" Value="{Binding ElementName=lbTextBlock, Path=Text, Converter={StaticResource trashTypeToColorConverter}}"/>
+                                                    <Setter Property="TextBlock.Width" Value="200"/>
+                                                    <Setter Property="TextBlock.Height" Value="52.5"/>
+                                                    <Setter Property="TextBlock.FontSize" Value="40"/>
+                                                    <Setter Property="TextBlock.TextAlignment" Value="Center"/>
+                                                    <Style.Triggers>
+                                                        <!-- Highlighted (selected) trash type -->
+                                                        <Trigger Property="TextBlock.IsMouseOver" Value="True">
+                                                            <Setter Property="TextBlock.Background" Value="MediumSpringGreen" />
+                                                        </Trigger>
+                                                        <!-- Because text is black, therefore not readable when black trash type bg -->
+                                                        <Trigger Property="TextBlock.Background" Value="Black">
+                                                            <Setter Property="TextBlock.Foreground" Value="White" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+
+                                <!-- I need to call command only when trash type is selected by having left mouse button go up -->
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="PreviewMouseUp">
+                                        <i:InvokeCommandAction>
+                                            <i:InvokeCommandAction.Command>
+                                                <!-- idk how else to choose command -->
+                                                <MultiBinding Converter="{StaticResource buttonModeToCommandConverter}">
+                                                    <Binding Path="ButtonMode" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                    <Binding Path="AddTrashCommand" />
+                                                    <Binding Path="RemoveTrashCommand" />
+                                                </MultiBinding>
+                                            </i:InvokeCommandAction.Command>
+                                        </i:InvokeCommandAction>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </ListBox>
+                        </StackPanel>
+                        
+                        <!-- MAIN IMAGE BUTTON FOR ADDING/REMOVING -->
+                        <StackPanel Visibility="{Binding IsMouseDown, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=True}">
+                            <Border Style="{StaticResource button_background}" Height="400" Width="400" CornerRadius="200" Panel.ZIndex="0">
+                                <Image Style="{StaticResource button_image}" Panel.ZIndex="1"/>
+                            </Border>
+                        </StackPanel>
+                        
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

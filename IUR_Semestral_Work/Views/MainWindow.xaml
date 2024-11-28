@@ -1,0 +1,347 @@
+﻿<Window x:Class="IUR_Semestral_Work.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:IUR_Semestral_Work"
+        xmlns:viewModels="clr-namespace:IUR_Semestral_Work.ViewModels"
+        xmlns:converters="clr-namespace:IUR_Semestral_Work.Converters"
+        xmlns:validationRules="clr-namespace:IUR_Semestral_Work.ValidationRules"
+        xmlns:m="clr-namespace:Microsoft.Maps.MapControl.WPF;assembly=Microsoft.Maps.MapControl.WPF"
+        xmlns:toggle="clr-namespace:ToggleButtonCustomControl;assembly=ToggleButtonCustomControl"
+        xmlns:roundbtn="clr-namespace:ButtonCustomControl;assembly=ButtonCustomControl"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="1300" Width="600" Background="#020300">
+
+    <Window.Resources>
+        <converters:BoolToVisibiltyConverter x:Key="boolToVisibiltyConverter" />
+        <converters:MapItemVisibilityConverter x:Key="mapItemVisibilityConverter" />
+        <converters:InverseAndBooleansToBooleanConverter x:Key="inverseAndBooleansToBooleanConverter" />
+        <validationRules:ValidationRuleProxy x:Key="validationRuleProxy" />
+
+    </Window.Resources>
+
+    <Window.DataContext>
+        <viewModels:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <StackPanel>
+            <!-- MAIN PAGE WITH ADD/PICK UP BUTTON -->
+            <StackPanel Margin="25" Height="1100" Visibility="{Binding IsChecked, ElementName=mainPageRadioButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+                <!-- Simply for debug since I don't have accurate GPS location in WPF, see comment in MVM -->
+                <toggle:SimpleToggleButton Height="40" Width="160" SwitchWidth="80" HorizontalAlignment="Right"
+                                           BorderBrush="Black" CornerRadius="20" LabelOn="Random GPS" LabelOff="IP GPS" FontSize="10"
+                                           IsChecked="{Binding IsRandomGPSON}"/>
+
+                <!-- ADD / REMOVE -->
+                <roundbtn:SimpleRoundButton x:Name="mainButton" ButtonMode="{Binding ElementName=modeButton, Path=IsChecked}"
+                                            PreviewMouseDown="Button_MouseDown" 
+                                            Margin="0,0,0,20"/>
+
+                <!-- Label informing user that he added/picked up a trash or informing how to use the button when opening the app  -->
+                <TextBlock Foreground="AliceBlue" HorizontalAlignment="Center" Text="{Binding StatusMessage}" FontSize="20" TextWrapping="Wrap"
+                       TextAlignment="Center" Visibility="{Binding IsLabelVisible, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}"/>
+
+                <!-- SWITCH MODE ADD <-> REMOVE -->
+                <toggle:SimpleToggleButton IsChecked="True" x:Name="modeButton" Height="80" Width="400" SwitchWidth="200" 
+                                           BorderBrush="Black" CornerRadius="40" LabelOn="ADD" LabelOff="PICK UP" FontSize="35"
+                                           Margin="0,20,0,20"/>
+
+                <!-- Info about trash disposal -->
+                <ListView Name="trashListBox" Style="{StaticResource trashDisposalInfoStyle}"
+                         ItemsSource="{Binding TrashTypesDisposalInfo}"
+                         Visibility="{Binding ElementName=modeButton, Path=IsChecked, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <!-- Headline with bold text -->
+                                <TextBlock Foreground="GhostWhite" Text="{Binding Header}" FontSize="35" FontWeight="Bold" Margin="5"/>
+                                <!-- Regular text -->
+                                <TextBlock Foreground="GhostWhite" Text="{Binding Description}" FontSize="22" TextWrapping="Wrap" Margin="5" MaxWidth="500"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <!-- This deletes the default style of listview items -->
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <ContentPresenter />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+            </StackPanel>
+
+            <!-- PAGE WITH MAP -->
+            <StackPanel Margin="25" Height="1100" Visibility="{Binding IsChecked, ElementName=mapRadioButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+                <Border BorderThickness="5" BorderBrush="MediumSpringGreen"
+                        CornerRadius="5" MaxWidth="510" Margin="0,20">
+                    <m:Map CredentialsProvider="Zl0zqo3d8TF0zaduryJ0~N-R7xPkvFIvxvrkhZwqUqQ~AjrlGsBHROgDj_KAPNl1rvHdgedLUuq-q0-ih22h5K8eY42HMSFiGxJeAq08gAug"
+                           Height="500" Width="500" Mode="AerialWithLabels" ZoomLevel="1" Center="50,15,0">
+                        <!-- TODO: center == current GPS location (I "can't" add this, read gps functions for the reason why) -->
+                        <m:MapItemsControl ItemsSource="{Binding MapElements}">
+                            <m:MapItemsControl.ItemTemplate>
+                                <!-- Pushpin template -->
+                                <DataTemplate>
+                                    <StackPanel m:MapLayer.Position="{Binding Location}" 
+                                                m:MapLayer.PositionOrigin="BottomCenter" Opacity="0.7">
+                                        <!-- Filters -->
+                                        <StackPanel.Visibility>
+                                            <MultiBinding Converter="{StaticResource mapItemVisibilityConverter}">
+                                                <Binding ElementName="AddedTrashFilterButton" Path="IsChecked" />
+                                                <Binding ElementName="RemovedTrashFilterButton" Path="IsChecked" />
+                                                <Binding Path="Picked" />
+                                                <Binding Path="PinType" />
+                                                <Binding ElementName="KovFilter" Path="IsChecked" />
+                                                <Binding ElementName="PlastFilter" Path="IsChecked" />
+                                                <Binding ElementName="PneuFilter" Path="IsChecked" />
+                                                <Binding ElementName="ElektroFilter" Path="IsChecked" />
+                                                <Binding ElementName="SmesFilter" Path="IsChecked" />
+                                                <Binding ElementName="SkloFilter" Path="IsChecked" />
+                                                <Binding ElementName="PaperFilter" Path="IsChecked" />
+                                                <Binding ElementName="DateStartFilter" Path="SelectedDate" />
+                                                <Binding ElementName="DateEndFilter" Path="SelectedDate" />
+                                                <Binding Path="DateLatest" />
+                                            </MultiBinding>
+                                        </StackPanel.Visibility>
+                                        <!-- Delete button just for debug purposes -->
+                                        <Button Content="Delete" Command="{Binding RemovePushpinCommand}"/>
+                                        <!-- Pushpin -->
+                                        <Canvas Width="50" Height="80">
+                                            <Grid>
+                                                <Path Data="M 0,0 L 50,0 50,50 25,80 0,50 0,0" Fill="{Binding PinColor}" Stroke="{Binding PinTypeColor}" StrokeThickness="5" />
+                                            </Grid>
+                                        </Canvas>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </m:MapItemsControl.ItemTemplate>
+                        </m:MapItemsControl>
+                    </m:Map>
+                </Border>
+                
+                <!-- Unpicked and Picked trash filter toggles -->
+                <Grid HorizontalAlignment="Center" Margin="0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Label HorizontalContentAlignment="Center" Grid.Row="0" Grid.Column="0" Foreground="AliceBlue">Unpicked Trash</Label>
+                    <Label HorizontalContentAlignment="Center" Grid.Row="0" Grid.Column="1" Foreground="AliceBlue">Picked Trash</Label>
+                    <!-- Unpicked trash filter toggle -->
+                    <toggle:SimpleToggleButton x:Name="AddedTrashFilterButton" IsChecked="{Binding IsAddedTrashFiltered, Mode=TwoWay}"
+                                               Margin="10" Grid.Row="1" Grid.Column="0" CornerRadius="20"/>
+                    <!-- Picked trash filter toggle -->
+                    <toggle:SimpleToggleButton x:Name="RemovedTrashFilterButton" IsChecked="{Binding IsRemovedTrashFiltered, Mode=TwoWay}"
+                                               Margin="10" Grid.Row="1" Grid.Column="1" CornerRadius="20"/>
+                </Grid>
+
+                <!-- Trash type filter checkboxes -->
+                <Label Foreground="AliceBlue" HorizontalAlignment="Center">Filters</Label>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <CheckBox x:Name="KovFilter" Style="{StaticResource CheckBoxStyle}">KOV</CheckBox>
+                    <CheckBox x:Name="PlastFilter" Style="{StaticResource CheckBoxStyle}">PLAST</CheckBox>
+                    <CheckBox x:Name="PneuFilter" Style="{StaticResource CheckBoxStyle}">PNEU</CheckBox>
+                    <CheckBox x:Name="ElektroFilter" Style="{StaticResource CheckBoxStyle}">ELEKTRO</CheckBox>
+                    <CheckBox x:Name="SmesFilter" Style="{StaticResource CheckBoxStyle}">SMĚS</CheckBox>
+                    <CheckBox x:Name="SkloFilter" Style="{StaticResource CheckBoxStyle}">SKLO</CheckBox>
+                    <CheckBox x:Name="PaperFilter" Style="{StaticResource CheckBoxStyle}">PAPÍR</CheckBox>
+                </StackPanel>
+
+                <!-- Date filters -->
+                <Grid HorizontalAlignment="Center" Margin="0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Foreground="AliceBlue">From</Label>
+                    <DatePicker Grid.Row="0" Grid.Column="1" x:Name="DateStartFilter"></DatePicker>
+                    <Label Grid.Row="1" Grid.Column="0" Foreground="AliceBlue">To</Label>
+                    <DatePicker Grid.Row="1" Grid.Column="1" x:Name="DateEndFilter"></DatePicker>
+                </Grid>
+            </StackPanel>
+
+            <!-- STATISTICS PAGE -->
+            <StackPanel Margin="25" Height="1100" Visibility="{Binding IsChecked, ElementName=statsRadioButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+                <Grid>
+
+                    <StackPanel Visibility="{Binding StatsType, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}">
+                        <!-- USERS Picked/Unpicked STATS-->
+                        <Label HorizontalAlignment="Center" Foreground="AliceBlue">Your personal stats vs others</Label>
+                        <lvc:PieChart Height="280" Name="PersonalStatsChart" Series="{Binding PersonalTrashStats}" 
+                            LegendLocation="Bottom" InnerRadius="0" Margin="0, 20" Foreground="AliceBlue">
+                            <lvc:PieChart.ChartLegend>
+                                <lvc:DefaultLegend BulletSize="20" Margin="0, 20"></lvc:DefaultLegend>
+                            </lvc:PieChart.ChartLegend>
+                            <lvc:PieChart.DataTooltip>
+                                <lvc:DefaultTooltip BulletSize="20"></lvc:DefaultTooltip>
+                            </lvc:PieChart.DataTooltip>
+                        </lvc:PieChart>
+
+                        <Label HorizontalAlignment="Center" Foreground="AliceBlue">Overall stats of everyone</Label>
+                        <!-- OVERALL Picked/Unpicked STATS-->
+                        <lvc:PieChart Height="280" Name="OverallStatsChart" Series="{Binding OverallTrashStats}" 
+                            LegendLocation="Bottom" InnerRadius="0" Margin="0, 20" Foreground="AliceBlue">
+                            <lvc:PieChart.ChartLegend>
+                                <lvc:DefaultLegend BulletSize="20" Margin="0, 20"></lvc:DefaultLegend>
+                            </lvc:PieChart.ChartLegend>
+                            <lvc:PieChart.DataTooltip>
+                                <lvc:DefaultTooltip BulletSize="20"></lvc:DefaultTooltip>
+                            </lvc:PieChart.DataTooltip>
+                        </lvc:PieChart>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding StatsType, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+
+                        <!-- USERS TRASH TYPE STATS -->
+                        <Label HorizontalAlignment="Center" Foreground="AliceBlue">Your stats of each trash type</Label>
+                        <lvc:PieChart Height="280" Name="PersonalTypeStatsChart" Series="{Binding PersonalTrashTypeStats}" 
+                            LegendLocation="Bottom" InnerRadius="0" Margin="0, 20" Foreground="AliceBlue">
+                            <lvc:PieChart.ChartLegend>
+                                <lvc:DefaultLegend BulletSize="20" Margin="0, 20"></lvc:DefaultLegend>
+                            </lvc:PieChart.ChartLegend>
+                            <lvc:PieChart.DataTooltip>
+                                <lvc:DefaultTooltip BulletSize="20"></lvc:DefaultTooltip>
+                            </lvc:PieChart.DataTooltip>
+                        </lvc:PieChart>
+
+                        <!-- OVERALL TRASH TYPE STATS -->
+                        <Label HorizontalAlignment="Center" Foreground="AliceBlue">Overall stats of each trash type</Label>
+                        <lvc:PieChart Height="280" Name="OverallTypeStatsChart" Series="{Binding OverallTrashTypeStats}" 
+                            LegendLocation="Bottom" InnerRadius="0" Margin="0, 20" Foreground="AliceBlue">
+                            <lvc:PieChart.ChartLegend>
+                                <lvc:DefaultLegend BulletSize="20" Margin="0, 20"></lvc:DefaultLegend>
+                            </lvc:PieChart.ChartLegend>
+                            <lvc:PieChart.DataTooltip>
+                                <lvc:DefaultTooltip BulletSize="20"></lvc:DefaultTooltip>
+                            </lvc:PieChart.DataTooltip>
+                        </lvc:PieChart>
+
+                    </StackPanel>
+                </Grid>
+                
+                <!-- Switch between picked/unpicked stats and each trash type stats -->
+                <toggle:SimpleToggleButton Height="60" Width="220" SwitchWidth="110" HorizontalAlignment="Center"
+                                    BorderBrush="Black" CornerRadius="30" LabelOn="Each Type" LabelOff="Overall" FontSize="20" ColorOff="Green"
+                                    Margin="0,20,0,20" FontWeight="SemiBold" IsChecked="{Binding StatsType}"/>
+            </StackPanel>
+            
+            <!-- PROFILE PAGE -->
+            <StackPanel Margin="25" Height="1100" Visibility="{Binding IsChecked, ElementName=profileRadioButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+
+                <!-- Sign-up/Sign-In -->
+                <StackPanel Visibility="{Binding IsLoggedIn, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}">
+
+                    <StackPanel Margin="0,150">
+                        
+                        <!-- Labels for Register and Log in -->
+                        <Label Foreground="AliceBlue" HorizontalAlignment="Center" Content="Register"
+                            Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}" />
+                        <Label Foreground="AliceBlue" HorizontalAlignment="Center" Content="Log in"
+                            Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}" />
+
+                        <StackPanel HorizontalAlignment="Center">
+                            <!-- Username TextBox with Label -->
+                            <StackPanel Orientation="Horizontal" Margin="0,10">
+                                <TextBox x:Name="usernameTB" Width="150" Style="{StaticResource usernameValidationStyle}" >
+                                    <TextBox.Text>
+                                        <Binding Path="UsernameTB" 
+                                                 UpdateSourceTrigger="PropertyChanged"
+                                                 ValidatesOnDataErrors="True">
+                                            <Binding.ValidationRules>
+                                                <validationRules:UsernameValidationRule ValidatesOnTargetUpdated="True"/>
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                                <Label Foreground="AliceBlue">Username</Label>
+                            </StackPanel>
+
+                            <!-- Password TextBox with Label -->
+                            <StackPanel Orientation="Horizontal" Margin="0,10">
+                                <TextBox x:Name="passwordTB" Width="150" Style="{StaticResource passwordValidationStyle}" >
+                                    <TextBox.Text>
+                                        <Binding Path="PasswordTB" 
+                                                 UpdateSourceTrigger="PropertyChanged"
+                                                 ValidatesOnDataErrors="True">
+                                            <Binding.ValidationRules>
+                                                <validationRules:PasswordValidationRule ValidatesOnTargetUpdated="True"/>
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                                <Label Foreground="AliceBlue">Password</Label>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Sign-up Button -->
+                        <Button Command="{Binding RegisterUserCommand}" Style="{StaticResource ButtonStyle}"
+                        Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}">
+                            <Button.Content>Sign Up</Button.Content>
+                            <Button.IsEnabled>
+                                <MultiBinding Converter="{StaticResource inverseAndBooleansToBooleanConverter}" Mode="TwoWay">
+                                    <Binding ElementName="usernameTB" Path="(Validation.HasError)" />
+                                    <Binding ElementName="passwordTB" Path="(Validation.HasError)" />
+                                </MultiBinding>
+                            </Button.IsEnabled>
+                        </Button>
+
+                        <!-- Sign-in Button -->
+                        <Button Command="{Binding LoginUserCommand}" Style="{StaticResource ButtonStyle}"
+                        Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+                            <Button.Content>Sign In</Button.Content>
+                            <Button.IsEnabled>
+                                <MultiBinding Converter="{StaticResource inverseAndBooleansToBooleanConverter}" Mode="TwoWay">
+                                    <Binding ElementName="usernameTB" Path="(Validation.HasError)" />
+                                    <Binding ElementName="passwordTB" Path="(Validation.HasError)" />
+                                </MultiBinding>
+                            </Button.IsEnabled>
+                        </Button>
+
+                        <!-- I tried using a ValidationRuleProxy to give it context about if it is register or login form -->
+                        <!-- but it didn't work so I decided to use this instead -->
+                        <Label Foreground="AliceBlue" HorizontalAlignment="Center" Content="{Binding LoginValidationText}"
+                               Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}"/>
+                        <Label Foreground="AliceBlue" HorizontalAlignment="Center" Content="{Binding RegisterValidationText}"
+                               Visibility="{Binding IsChecked, ElementName=signupButton, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=False}"/>
+                    </StackPanel>
+
+                    <!-- Switch between registering or loging in -->
+                    <toggle:SimpleToggleButton Height="70" Width="300" SwitchWidth="150" 
+                                               BorderBrush="Black" CornerRadius="35" LabelOn="LOG IN" LabelOff="REGISTER" FontSize="25"
+                                               Margin="0,400,0,20" x:Name="signupButton"/>
+                </StackPanel>
+                
+                <!-- Profile -->
+                <StackPanel Margin="0,200,0,0" Visibility="{Binding IsLoggedIn, Converter={StaticResource boolToVisibiltyConverter}, ConverterParameter=True}">
+                    <Label Foreground="AliceBlue" HorizontalAlignment="Center">Profile</Label>
+                    <Label Foreground="AliceBlue" HorizontalAlignment="Center" Content="{Binding ProfileViewModel.Username}"></Label>
+                    <Button Command="{Binding LogOffUserCommand}" Style="{StaticResource ButtonStyle}">Log off</Button>
+                </StackPanel>
+            </StackPanel>
+            
+            <!-- PAGE ICON BUTTONS -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <RadioButton IsChecked="True" x:Name="mainPageRadioButton" Content="../Images/home.png" Style="{StaticResource PageIcon}"/>
+                <RadioButton x:Name="mapRadioButton" Content="../Images/pin.png" Style="{StaticResource PageIcon}"/>
+                <RadioButton x:Name="statsRadioButton" Content="../Images/graph.png" Style="{StaticResource PageIcon}"/>
+                <RadioButton x:Name="profileRadioButton" Content="../Images/profile-user.png" Style="{StaticResource PageIcon}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
