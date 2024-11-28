@@ -15,8 +15,6 @@
     <img src="gifs/removing.gif" alt="Removing GIF" width="250"/>
   </div>
 
----
-
 ## **Pages**
 
   <div align="center">
@@ -24,8 +22,6 @@
     <img src="gifs/stats.gif" alt="Removing GIF" width="250"/>
     <img src="gifs/profile.gif" alt="Removing GIF" width="250"/>
   </div>
-  
----
 
 ## **Animations**
 
@@ -33,8 +29,6 @@
     <img src="gifs/anim1.gif" alt="Adding GIF" width="250"/>
     <img src="gifs/anim2.gif" alt="Removing GIF" height="318"/>
   </div>
-  
----
 
 ## **Icons**
 
