@@ -8,7 +8,7 @@
 
 ---
 
-*** Adding / Removing
+## **Adding / Removing**
 
   <div align="center">
     <img src="gifs/adding.gif" alt="Adding GIF" width="250"/>
@@ -17,7 +17,7 @@
 
 ---
 
-*** Pages
+## **Pages**
 
   <div align="center">
     <img src="gifs/filters.gif" alt="Adding GIF" width="250"/>
@@ -27,7 +27,7 @@
   
 ---
 
-*** Animations
+## **Animations**
 
   <div align="center">
     <img src="gifs/anim1.gif" alt="Adding GIF" width="250"/>
@@ -36,7 +36,8 @@
   
 ---
 
-*** Icons
+## **Icons**
+
   <img src="gifs/page_icons.gif" alt="Adding GIF" width="500"/>
   
 </div>
