@@ -4,11 +4,10 @@
 
 ![image](https://github.com/user-attachments/assets/b2163971-fff8-462c-a1d7-04b9a5915e3f)
 
-
-<div style="text-align: center;">
-  <div style="display: inline-flex; gap: 20px;">
+<p align="center">
+  <div style="display: flex; justify-content: center; gap: 20px;">
     <img src="gifs/adding.gif" alt="Adding GIF" width="250"/>
     <img src="gifs/removing.gif" alt="Removing GIF" width="250"/>
   </div>
-</div>
+</p>
 
