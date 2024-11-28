@@ -12,7 +12,18 @@
     <img src="gifs/removing.gif" alt="Removing GIF" width="250"/>
   </div>
 
-  
+  <div align="center">
+    <img src="gifs/filters.gif" alt="Adding GIF" width="250"/>
+    <img src="gifs/stats.gif" alt="Removing GIF" width="250"/>
+    <img src="gifs/profile.gif" alt="Removing GIF" width="250"/>
+  </div>
+
+  <div align="center">
+    <img src="gifs/anim1.gif" alt="Adding GIF" width="250"/>
+    <img src="gifs/anim2.gif" alt="Removing GIF" width="250"/>
+  </div>
+
+  <img src="gifs/page_icons.gif" alt="Adding GIF" width="250"/>
 </div>
 
 
